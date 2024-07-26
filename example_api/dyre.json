@@ -1,0 +1,39 @@
+[
+  {
+    "name": "Customers",
+    "tableName": "Customers",
+    "fields": [
+      {
+        "name": "CustomerID",
+        "required": true
+      },
+      "Name",
+      "Phone"
+    ],
+    "groups": [
+      {
+        "name": "Address",
+        "fields": [
+          {
+            "name": "Street"
+          },
+          {
+            "name": "City"
+          },
+          {
+            "name": "State",
+            "type": "null.Int"
+          },
+          {
+            "name": "Zipcode",
+            "type": "null.String"
+          },
+          {
+            "name": "Zipint",
+            "type": "null.Int"
+          }
+        ]
+      }
+    ]
+  }
+]

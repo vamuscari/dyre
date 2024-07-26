@@ -1,0 +1,32 @@
+[
+  {
+    "name": "TestRequestName",
+    "sqlfile": "./path/to/file/query.sql",
+    "requestType": "GET",
+    "tableName": "Table",
+    "fields": [
+      {
+        "name": "field1",
+        "required": true,
+        "tag": {
+          "db": "field1"
+        }
+      },
+      {
+        "name": "field2",
+        "required": true,
+        "select": "fieldX AS field2"
+      },
+      "field3"
+    ],
+    "groups": [
+      {
+        "name": "group1",
+        "fields": [
+          "field5",
+          "field6"
+        ]
+      }
+    ]
+  }
+]
