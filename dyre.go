@@ -42,9 +42,9 @@ type DyRe_Request struct {
 	name        string
 	requestType string
 	fields      map[string]DyRe_Field
-	_fieldNames []string
+	fieldNames  []string
 	groups      map[string]DyRe_Group
-	_groupNames []string
+	groupNames  []string
 	typeMap     map[string]interface{}
 	sql         DyRe_SQL
 }
@@ -75,8 +75,8 @@ func (re *DyRe_Request) updateNames() {
 	for _, group := range re.groups {
 		groupList = append(groupList, group.name)
 	}
-	re._fieldNames = fieldList
-	re._groupNames = groupList
+	re.fieldNames = fieldList
+	re.groupNames = groupList
 }
 
 // Make fields on construction to maintain order
@@ -112,11 +112,11 @@ func (re *DyRe_Request) ValidateRequest(fields []string, groups []string) (DyRe_
 }
 
 func (re *DyRe_Request) FieldNames() []string {
-	return re._fieldNames
+	return re.fieldNames
 }
 
 func (re *DyRe_Request) GroupNames() []string {
-	return re._groupNames
+	return re.groupNames
 }
 
 // Fields for SQL Select.
