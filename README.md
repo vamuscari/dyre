@@ -1,9 +1,11 @@
 # \[Dy\]namic \[Re\]quests
 
-sql query match
+DyRe is a request builder for a middleware service. The intent of DyRe is to help automate selections of multiple fields without removing any functionalilty for handeling requests. No two APIs are the same an it is impossible to know what changes are to come, so flexibility was was taken in favor of ease of use. 
 
-DyRe is a request builder for a middleware  service. The intent of DyRe is to help automate selections of multiple fields without removing base functionality. If there is the desire to build additional functions on your request or handle things in a specific way, then it should more or less be business a usual when using Gin.    
-
+Example API request
+`curl http://localhost:8080/Customers?fields=Name,Phone&groups=Address`  
+- Fields are any independent SQL field.
+- Groups are a convienece for simplifying requests by returning multiple fields. (At no point have I ever just wanted City in a request lol)
 
 
 ## Setting up JSON config
@@ -87,3 +89,43 @@ func main() {
 	}
 }
 ```
+
+
+```go
+func getCustomers(g *gin.Context) {
+	fields_string, _ := g.GetQuery("fields")
+	fields := strings.Split(fields_string, ",")
+
+	groups_string, _ := g.GetQuery("groups")
+	groups := strings.Split(groups_string, ",")
+	customers, ok := Re["Customers"]
+	if !ok {
+		g.String(500, "Failed to start request")
+		return
+	}
+
+	valid, err := customers.ValidateRequest(fields, groups)
+	if err != nil {
+		g.String(400, "Failed to parse request")
+		return
+	}
+
+	query := fmt.Sprintf("SELECT %s FROM %s LIMIT 10", strings.Join(valid.SQLFields(), ", "), customers.TableName())
+
+	table, err := read_db(query, valid)
+	if err != nil {
+		g.String(500, "Failed to make request")
+		return
+	}
+
+	output := make(map[string]any)
+	headers := valid.Headers()
+
+	output["Headers"] = headers
+	output["Table"] = table
+
+	g.JSON(200, output)
+	return
+}
+```
+
