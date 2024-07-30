@@ -15,7 +15,7 @@ If a type is not declared make sure to setup a default type that works for you.
 Groups are collections of fields to help simplify requests. A group must have a name and fields. 
 The fields in a group are the same as in the base fields.
 
-```{json}
+```json
 [
   {
     "name": "Customers",
@@ -60,7 +60,7 @@ The fields in a group are the same as in the base fields.
 
 
 ## Setting up middleware
-```{go}
+```go
 
 // Global Var for fetching request info
 var Re map[string]dyre.DyRe_Request
