@@ -1,11 +1,11 @@
 # \[Dy\]namic \[Re\]quests
 
-DyRe is a request builder for a middleware service. The intent of DyRe is to help automate selections of multiple fields without removing any functionalilty for handeling requests. No two APIs are the same and it is impossible to know what changes are to come, so flexibility favored over ease of use. 
+DyRe is a request builder for a middleware service. The intent of DyRe is to help automate selections of multiple fields without removing any functionality for handling requests. No two APIs are the same and it is impossible to know what changes are to come, so flexibility favored over ease of use. 
 
 Example API request
 `curl http://localhost:8080/Customers?fields=Name,Phone&groups=Address`  
 - Fields are any independent SQL field.
-- Groups are a convienece for simplifying requests by returning multiple fields. (At no point have I ever just wanted City in a request lol)
+- Groups are a convenience for simplifying requests by returning multiple fields. (At no point have I ever just wanted City in a request lol)
 
 
 ## Setting up JSON config
@@ -93,7 +93,7 @@ func main() {
 }
 ```
 
-## Making a handeler 
+## Making a handler 
 get all you params then check the values against the response. Once a response has been validated for fields and groups its pretty easy to handle the rest. You will have to make something to handle your requests to sql. The `foo.GenerateArray()` method is designed to work with the `database/sql` package by returning an array of new pointers based on the request. 
 
 ```go
