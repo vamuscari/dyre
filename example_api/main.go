@@ -67,7 +67,7 @@ func getCustomers(g *gin.Context) {
 		return
 	}
 
-	query := fmt.Sprintf("SELECT %s FROM %s LIMIT 10", strings.Join(valid.SQLFields(), ", "), customers.TableName())
+	query := fmt.Sprintf("SELECT %s FROM %s LIMIT 1000", strings.Join(valid.SQLFields(), ", "), customers.TableName())
 
 	table, err := read_db(query, valid)
 	if err != nil {

@@ -14,9 +14,7 @@
       {
         "name": "Address",
         "fields": [
-          {
-            "name": "Street"
-          },
+          "Street",
           {
             "name": "City"
           },
