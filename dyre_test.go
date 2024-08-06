@@ -1,59 +1,423 @@
 package dyre
 
 import (
+	"encoding/json"
+	"fmt"
+	"reflect"
 	"testing"
 )
 
-func buildTestRequests() (map[string]DyRe_Request, error) {
-	fileName := "./test_data/slqGen.json"
-	js, err := readDyreJSON(fileName)
-	if err != nil {
-		return nil, err
-	}
+// 󰆧 (*DyRe_Request).ValidateRequest
+// 󰆧 (*DyRe_Request).FieldNames
+// 󰆧 (*DyRe_Request).GroupNames
+// 󰆧 (*DyRe_Validated).SQLFields
+// 󰆧 (*DyRe_Validated).GenerateArray
+// 󰆧 (*DyRe_Validated).Headers
+// 󰆧 (*DyRe_Request).TableName
+// 󰆧 (*DyRe_Request).SQLFile
 
-	dyre_requests, err := parseDyreJSON(js)
-	if err != nil {
-		return nil, err
-	}
+func TestStandardRequest(t *testing.T) {
 
-	return dyre_requests, nil
+	const standardRequstString string = `
+	[
+		{
+			"name": "StandardRequest",
+			"tableName": "Table",
+			"fields": [
+				{
+					"name": "field1",
+					"required": true
+				},
+				{
+					"name": "field2",
+					"required": true,
+					"sqlSelect": "fieldX AS field2"
+				},
+				"field3"
+			],
+			"groups": [
+				{
+					"name": "group1",
+					"fields": [
+						{
+							"name": "fieldg1-1",
+							"sqlSelect": "field11 AS fieldg1-1"
+						},
+						{
+							"name": "fieldg1-2"
+						},
+						"fieldg1-3"
+					]
+				},
+				{
+					"name": "group2",
+					"fields": [
+						"fieldg2-1"
+					]
+				}
+			]
+		}
+	]
+	`
+
+	re, err := dyre_test_parse(standardRequstString, "StandardRequest")
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Run("CheckFields", func(t *testing.T) {
+		want := []string{"field1", "field2", "field3"}
+		got := re.FieldNames()
+		errors := deepEqualStringArray(want, got)
+		if len(errors) > 0 {
+			for _, err := range errors {
+				t.Error(err)
+			}
+		}
+	})
+	t.Run("CheckGroups", func(t *testing.T) {
+		want := []string{"group1", "group2"}
+		got := re.GroupNames()
+		errors := deepEqualStringArray(want, got)
+		if len(errors) > 0 {
+			for _, err := range errors {
+				t.Error(err)
+			}
+		}
+	})
+
+	t.Run("DyRe_Request.ValidateRequest() Partial", func(t *testing.T) {
+		// has real field, has fake field, missing field
+		given_fields := []string{"field1", "field100"}
+		given_groups := []string{"group1", "group100"}
+
+		valid, valid_err := re.ValidateRequest(given_fields, given_groups)
+		if valid_err != nil {
+			t.Error(valid_err)
+		}
+
+		valid_field_names := []string{}
+		for _, f := range valid._fields {
+			valid_field_names = append(valid_field_names, f.name)
+		}
+
+		valid_group_names := []string{}
+		for _, g := range valid._groups {
+			valid_group_names = append(valid_group_names, g.name)
+		}
+
+		expected_fields_names := []string{"field1", "field2"}
+		expected_groups_names := []string{"group1"}
+
+		field_errors := deepEqualStringArray(expected_fields_names, valid_field_names)
+		if len(field_errors) > 0 {
+			for _, err := range field_errors {
+				t.Error(err)
+			}
+		}
+
+		group_errors := deepEqualStringArray(expected_groups_names, valid_group_names)
+		if len(group_errors) > 0 {
+			for _, err := range group_errors {
+				t.Error(err)
+			}
+		}
+
+		expected_sql_field := []string{"field1", "fieldX AS field2", "field11 AS fieldg1-1", "fieldg1-2", "fieldg1-3"}
+
+		sql_errors := deepEqualStringArray(expected_sql_field, valid._sqlFields)
+		if len(sql_errors) > 0 {
+			for _, err := range sql_errors {
+				t.Error(err)
+			}
+		}
+
+	})
+
+	t.Run("DyRe_Request.ValidateRequest() All", func(t *testing.T) {
+		// has real field, has fake field, missing field
+		given_fields := []string{"field1", "field2", "field3"}
+		given_groups := []string{"group1", "group2"}
+
+		valid, valid_err := re.ValidateRequest(given_fields, given_groups)
+		if valid_err != nil {
+			t.Error(valid_err)
+		}
+
+		valid_field_names := []string{}
+		for _, f := range valid._fields {
+			valid_field_names = append(valid_field_names, f.name)
+		}
+
+		valid_group_names := []string{}
+		for _, g := range valid._groups {
+			valid_group_names = append(valid_group_names, g.name)
+		}
+
+		expected_fields_names := []string{"field1", "field2", "field3"}
+		expected_groups_names := []string{"group1", "group2"}
+
+		field_errors := deepEqualStringArray(expected_fields_names, valid_field_names)
+		if len(field_errors) > 0 {
+			for _, err := range field_errors {
+				t.Error(err)
+			}
+		}
+
+		group_errors := deepEqualStringArray(expected_groups_names, valid_group_names)
+		if len(group_errors) > 0 {
+			for _, err := range group_errors {
+				t.Error(err)
+			}
+		}
+
+		expected_sql_field := []string{"field1", "fieldX AS field2", "field3", "field11 AS fieldg1-1", "fieldg1-2", "fieldg1-3", "fieldg2-1"}
+
+		sql_errors := deepEqualStringArray(expected_sql_field, valid._sqlFields)
+		if len(sql_errors) > 0 {
+			for _, err := range sql_errors {
+				t.Error(err)
+			}
+		}
+	})
+
+	t.Run("CheckValidationNone", func(t *testing.T) {
+		empty := []string{}
+		_, err := re.ValidateRequest(empty, empty)
+		if err != nil {
+			t.Error(err)
+		}
+	})
 }
 
-func TestValidation(t *testing.T) {
-	requests, err := buildTestRequests()
-	if err != nil {
-		t.Fatalf("\nFailed to build test requests\nError:%v", err)
-	}
+func TestNoFields(t *testing.T) {
+	const noFieldsString string = `
+	[{	"name": "NoFields",
+			"tableName": "Table",
+			"groups": [
+				{
+					"name": "group1",
+					"fields": [
+						"field2"
+					]
+				},
+				{
+					"name": "group2",
+					"fields": [
+						"field3"
+					]
+				}
+			]
+		}
+	]`
 
-	for name, request := range requests {
-		name := name
-		r := request
-		t.Run(name, func(t *testing.T) {
-			t.Parallel()
-			if name != r.name {
-				t.Errorf("Request %s map name %s does not match", r.name, name)
+	re, err := dyre_test_parse(noFieldsString, "NoFields")
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Run("CheckFields", func(t *testing.T) {
+		want := []string{}
+		got := re.FieldNames()
+		errors := deepEqualStringArray(want, got)
+		if len(errors) > 0 {
+			for _, err := range errors {
+				t.Error(err)
 			}
-			// Build many validated options
-			valid := []DyRe_Validated{}
-			fields := []string{}
-			for _, f := range r.fields {
-				fields = append(fields, f.name)
-				groups := []string{}
-				for _, g := range r.groups {
-					groups = append(groups, g.name)
-					f_valid, err := r.ValidateRequest(fields, fields)
-					if err != nil {
-						t.Errorf("Request:%s\nCould not validate %v and %v", name, fields, groups)
-					} else {
-						valid = append(valid, f_valid)
-					}
+		}
+	})
+	t.Run("CheckGroups", func(t *testing.T) {
+		want := []string{"group1", "group2"}
+		got := re.GroupNames()
+		errors := deepEqualStringArray(want, got)
+		if len(errors) > 0 {
+			for _, err := range errors {
+				t.Error(err)
+			}
+		}
+	})
+}
+
+func TestNoGroups(t *testing.T) {
+	const noGroupsString string = `
+  [{ "name": "NoGroups",
+    "fields": [
+      "field1"
+    ]
+  }]`
+
+	re, err := dyre_test_parse(noGroupsString, "NoGroups")
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Run("CheckFields", func(t *testing.T) {
+		want := []string{"field1"}
+		got := re.FieldNames()
+		errors := deepEqualStringArray(want, got)
+		if len(errors) > 0 {
+			for _, err := range errors {
+				t.Error(err)
+			}
+		}
+	})
+	t.Run("CheckGroups", func(t *testing.T) {
+		want := []string{}
+		got := re.GroupNames()
+		errors := deepEqualStringArray(want, got)
+		if len(errors) > 0 {
+			for _, err := range errors {
+				t.Error(err)
+			}
+		}
+	})
+}
+
+func TestTypeSub(t *testing.T) {
+	const typesString string = `
+  [{"name": "TypeRequest",
+    "tableName": "Table",
+    "fields": [
+      {
+        "name": "field1",
+        "type": "sql.NullInt64",
+        "required": true
+      },
+      {
+        "name": "field2",
+        "type": "sql.NullBool",
+        "sqlSelect": "fieldX AS field2"
+      },
+      "field3"
+    ],
+    "groups": [
+      {
+        "name": "group1",
+        "fields": [
+          {
+            "name": "fieldg1-1",
+            "type": "sql.NullFloat64",
+            "required": true,
+            "sqlSelect": "field11 AS fieldg1-1"
+          },
+          {
+            "name": "fieldg1-2",
+            "type": "sql.NullByte"
+          },
+          {
+            "name": "fieldg1-3"
+          },
+          "fieldg1-4"
+        ]
+      }
+    ]
+  }]`
+
+	re, err := dyre_test_parse(typesString, "TypeRequest")
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Run("DyRe_Request.ValidateRequest() All", func(t *testing.T) {
+		// has real field, has fake field, missing field
+		given_fields := []string{"field1", "field2", "field3"}
+		given_groups := []string{"group1"}
+
+		valid, valid_err := re.ValidateRequest(given_fields, given_groups)
+		if valid_err != nil {
+			t.Error(valid_err)
+		}
+
+		valid_field_names := []string{}
+		for _, f := range valid._fields {
+			valid_field_names = append(valid_field_names, f.name)
+		}
+
+		valid_group_names := []string{}
+		for _, g := range valid._groups {
+			valid_group_names = append(valid_group_names, g.name)
+		}
+
+		t.Run("FieldNames", func(t *testing.T) {
+			expected_fields_names := []string{"field1", "field2", "field3"}
+			field_errors := deepEqualStringArray(expected_fields_names, valid_field_names)
+			if len(field_errors) > 0 {
+				for _, err := range field_errors {
+					t.Error(err)
 				}
 			}
+		})
 
-			// Test Validated Options
-			for _, v := range valid {
+		t.Run("GroupNames", func(t *testing.T) {
+
+			expected_groups_names := []string{"group1"}
+
+			group_errors := deepEqualStringArray(expected_groups_names, valid_group_names)
+			if len(group_errors) > 0 {
+				for _, err := range group_errors {
+					t.Error(err)
+				}
+			}
+		})
+
+		t.Run("sqlFields", func(t *testing.T) {
+
+			expected_sql_field := []string{"field1", "fieldX AS field2", "field3", "field11 AS fieldg1-1", "fieldg1-2", "fieldg1-3", "fieldg1-4"}
+
+			sql_errors := deepEqualStringArray(expected_sql_field, valid._sqlFields)
+			if len(sql_errors) > 0 {
+				for _, err := range sql_errors {
+					t.Error(err)
+				}
+			}
+		})
+
+		t.Run("headers", func(t *testing.T) {
+
+			expected := []string{"field1", "field2", "field3", "fieldg1-1", "fieldg1-2", "fieldg1-3", "fieldg1-4"}
+
+			errors := deepEqualStringArray(expected, valid._headers)
+			if len(errors) > 0 {
+				for _, err := range errors {
+					t.Error(err)
+				}
+			}
+		})
+
+		t.Run("GenerateArray()", func(t *testing.T) {
+			expected := []string{"sql.NullString", "sql.NullString", "sql.NullString", "sql.NullString", "sql.NullString"}
+			arr := valid.GenerateArray()
+			types_in_arr := []string{}
+			for _, v := range arr {
+				types_in_arr = append(types_in_arr, reflect.TypeOf(v).String())
 			}
 
+			errors := deepEqualStringArray(expected, types_in_arr)
+			if len(errors) > 0 {
+				for _, err := range errors {
+					t.Error(err)
+				}
+			}
 		})
+
+	})
+
+}
+
+func dyre_test_parse(data string, name string) (DyRe_Request, error) {
+	var dyre_test_map []map[string]interface{}
+	err := json.Unmarshal([]byte(data), &dyre_test_map)
+	if err != nil {
+		return DyRe_Request{}, fmt.Errorf("Failed unmarshal for: %s\nError: %v\n", name, err)
 	}
+
+	dyre_requests, err := parseDyreJSON(dyre_test_map)
+	if err != nil {
+		return DyRe_Request{}, fmt.Errorf("Failed to parse for: %s\nError: %v\n", name, err)
+	}
+
+	fmt.Printf("RequestName: %v\n", name)
+
+	re, ok := dyre_requests[name]
+	if !ok {
+		return DyRe_Request{}, fmt.Errorf("Map key error for: %s\n", name)
+	}
+
+	return re, nil
 }

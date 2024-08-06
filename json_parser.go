@@ -58,6 +58,13 @@ func parseDyreJSON(m []map[string]interface{}) (map[string]DyRe_Request, error) 
 			name: js_request["name"].(string),
 		}
 
+		expected_keys := []string{"name", "fields", "groups", "tableName"}
+		for i := range js_request {
+			if !contains(expected_keys, i) {
+				fmt.Printf("WARN: Unexpected Key %s on Request %s\n", i, dy_request.name)
+			}
+		}
+
 		if fields, ok := js_request["fields"]; ok {
 			dy_request.fields = parseDryeJSONFields(fields.([]interface{}))
 		}
@@ -79,11 +86,17 @@ func parseDyreJSON(m []map[string]interface{}) (map[string]DyRe_Request, error) 
 			dy_request.sql = DyRe_SQL{tableName: tableName.(string)}
 		}
 
-		if sqlFile, ok := js_request["sqlFile"]; ok {
-			dy_request.sql = DyRe_SQL{sqlFile: sqlFile.(string)}
+		fieldList := []string{}
+		for _, field := range dy_request.fields {
+			fieldList = append(fieldList, field.name)
+		}
+		groupList := []string{}
+		for _, group := range dy_request.groups {
+			groupList = append(groupList, group.name)
 		}
 
-		dy_request.updateNames()
+		dy_request.fieldNames = fieldList
+		dy_request.groupNames = groupList
 
 		requests[dy_request.name] = dy_request
 	}
@@ -127,6 +140,7 @@ func parseDryeJSONFields(a []any) map[string]DyRe_Field {
 					continue
 				}
 			} else {
+				log.Printf("<name> not found: %v,\n", name)
 				continue
 			}
 
@@ -152,7 +166,7 @@ func parseDryeJSONFields(a []any) map[string]DyRe_Field {
 				new_field.typeName = DefaultType
 			}
 
-			if querySelect, ok := field_map["querySelect"]; ok {
+			if querySelect, ok := field_map["sqlSelect"]; ok {
 				if querySelectString, ok := querySelect.(string); ok {
 					new_field.sqlSelect = querySelectString
 				} else {
@@ -161,6 +175,13 @@ func parseDryeJSONFields(a []any) map[string]DyRe_Field {
 				}
 			} else {
 				new_field.sqlSelect = new_field.name
+			}
+
+			expected_keys := []string{"name", "required", "type", "sqlSelect"}
+			for i := range field_map {
+				if !contains(expected_keys, i) {
+					fmt.Printf("WARN: Unexpected Key %s on Field %s\n", i, new_field.name)
+				}
 			}
 
 			dyre_fields[new_field.name] = new_field
@@ -214,6 +235,13 @@ func parseDryeJSONGroups(a []interface{}) map[string]DyRe_Group {
 			new_group.fields = parseDryeJSONFields(group_fields.([]interface{}))
 		} else {
 			continue
+		}
+
+		expected_keys := []string{"name", "fields", "required"}
+		for i := range group {
+			if !contains(expected_keys, i) {
+				fmt.Printf("WARN: Unexpected Key %s on Group %s\n", i, new_group.name)
+			}
 		}
 
 		dyre_groups[new_group.name] = new_group

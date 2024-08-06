@@ -2,7 +2,7 @@ module dyre-example.go
 
 go 1.22.4
 
-require github.com/vamuscari/dyre v0.0.0
+require github.com/vamuscari/dyre v0.0.0-beta2
 
 require (
 	github.com/bytedance/sonic v1.11.6 // indirect
