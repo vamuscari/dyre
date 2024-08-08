@@ -34,23 +34,18 @@ The fields in a group are the same as in the base fields.
       {
         "name": "Address",
         "fields": [
-          {
-            "name": "Street"
-          },
+         "Street"
           {
             "name": "City"
           },
           {
             "name": "State",
-            "type": "null.Int"
           },
           {
             "name": "Zipcode",
-            "type": "null.String"
           },
           {
             "name": "Zipint",
-            "type": "null.Int"
           }
         ]
       }
@@ -70,21 +65,7 @@ Starting an example server. You can opt for a global variable or pass it in thro
 // Global Var for fetching request info
 var Re map[string]dyre.DyRe_Request
 
-// "gopkg.in/guregu/null.v4"
 func main() {
-
-	var sqlTypes = map[string]interface{}{
-		"null.String": null.String{},
-		"null.Int":    null.Int{},
-		"null.Bool":   null.Bool{},
-		"null.Time":   null.Time{},
-		"null.Float":  null.Float{},
-	}
-    // Add the sql Types to the know types
-    // The name does not have to match
-	dyre.AddTypes(sqlTypes)
-	dyre.DefaultType = "null.String"
-
 	var dyre_err error
 	Re, dyre_err = dyre.Init("./dyre.json")
 	if dyre_err != nil {
@@ -94,7 +75,7 @@ func main() {
 ```
 
 ## Making a handler 
-get all you params then check the values against the response. Once a response has been validated for fields and groups its pretty easy to handle the rest. You will have to make something to handle your requests to sql. The `foo.GenerateArray()` method is designed to work with the `database/sql` package by returning an array of new pointers based on the request. 
+get all you params then check the values against the response. Once a response has been validated for fields and groups its pretty easy to handle the rest.
 
 ```go
 func getCustomers(g *gin.Context) {
