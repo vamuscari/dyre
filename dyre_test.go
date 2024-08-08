@@ -3,7 +3,6 @@ package dyre
 import (
 	"encoding/json"
 	"fmt"
-	"reflect"
 	"testing"
 )
 
@@ -373,22 +372,6 @@ func TestTypeSub(t *testing.T) {
 			expected := []string{"field1", "field2", "field3", "fieldg1-1", "fieldg1-2", "fieldg1-3", "fieldg1-4"}
 
 			errors := deepEqualStringArray(expected, valid._headers)
-			if len(errors) > 0 {
-				for _, err := range errors {
-					t.Error(err)
-				}
-			}
-		})
-
-		t.Run("GenerateArray()", func(t *testing.T) {
-			expected := []string{"sql.NullString", "sql.NullString", "sql.NullString", "sql.NullString", "sql.NullString"}
-			arr := valid.GenerateArray()
-			types_in_arr := []string{}
-			for _, v := range arr {
-				types_in_arr = append(types_in_arr, reflect.TypeOf(v).String())
-			}
-
-			errors := deepEqualStringArray(expected, types_in_arr)
 			if len(errors) > 0 {
 				for _, err := range errors {
 					t.Error(err)

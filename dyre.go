@@ -1,50 +1,17 @@
 package dyre
 
 import (
-	"database/sql"
 	"errors"
 	"fmt"
 )
 
 // TODO: sql tools
 
-// I though about leaving this out, but this package is made to use sql.
-var DefaultType = "sql.NullString"
-
-var Types = map[string]interface{}{
-	"string":          string(""),
-	"int":             int(0),
-	"int8":            int8(0),
-	"int16":           int16(0),
-	"int32":           int32(0),
-	"int64":           int64(0),
-	"uint":            uint(0),
-	"uint8":           uint8(0), // byte
-	"uint16":          uint16(0),
-	"uint32":          uint32(0),
-	"uint64":          uint64(0),
-	"uintptr":         uintptr(0), // rune
-	"bool":            bool(false),
-	"float32":         float32(0),
-	"float64":         float64(0),
-	"complex64":       complex64(0),
-	"complex128":      complex128(0),
-	"sql.NullString":  sql.NullString{},
-	"sql.NullBool":    sql.NullBool{},
-	"sql.NullByte":    sql.NullByte{},
-	"sql.NullTime":    sql.NullTime{},
-	"sql.NullInt16":   sql.NullInt16{},
-	"sql.NullInt32":   sql.NullInt32{},
-	"sql.NullInt64":   sql.NullInt64{},
-	"sql.NullFloat64": sql.NullFloat64{},
-}
-
 type DyRe_Field struct {
 	name      string
 	typeName  string
 	required  bool
 	sqlSelect string
-	sqlWhere  string
 	tag       map[string]string
 }
 
@@ -81,20 +48,6 @@ type DyRe_Request struct {
 }
 
 // TODO: Sub request into sql file
-
-// Quickly adding Types to Dyre
-// Takes a map input
-//
-//	Example:
-//		var sqlTypes = map[string]interface{}{
-//			"sql.NullString":  sql.NullString{},
-//		}
-//	 dyre.AddTypes(sqlTypes)
-func AddTypes(m map[string]interface{}) {
-	for k, v := range m {
-		Types[k] = v
-	}
-}
 
 // Validates incoming fields and groups.
 // Returns a validated struct for making sql queries.
@@ -145,17 +98,6 @@ func (valid *DyRe_Validated) SQLFields() []string {
 		sqlFields = append(sqlFields, v)
 	}
 	return sqlFields
-}
-
-// Returns an array of pointers bases on the valid fields
-// each type is a new pointer so this can be used for a sql scan
-func (valid *DyRe_Validated) GenerateArray() []interface{} {
-	typeArray := []interface{}{}
-	for _, t := range valid._sqlTypes {
-		new := Types[t]
-		typeArray = append(typeArray, &new)
-	}
-	return typeArray
 }
 
 // Returns the list of names for the fields that were calles
