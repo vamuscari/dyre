@@ -3,6 +3,7 @@ package dyre
 import (
 	"errors"
 	"fmt"
+	"maps"
 )
 
 // TODO: sql tools
@@ -115,6 +116,14 @@ func (re *DyRe_Request) TableName() string {
 
 func (re *DyRe_Request) SQLFile() string {
 	return re.sql.sqlFile
+}
+
+func (re *DyRe_Request) Fields() map[string]DyRe_Field {
+	return maps.Clone(re.fields)
+}
+
+func (re *DyRe_Request) Groups() map[string]DyRe_Group {
+	return maps.Clone(re.groups)
 }
 
 func contains(a []string, l string) bool {
