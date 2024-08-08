@@ -343,11 +343,39 @@ func TestTypeSub(t *testing.T) {
 			}
 		})
 
+		t.Run("DyRe_Request.Fields()", func(t *testing.T) {
+			expected_fields_names := []string{"field1", "field2", "field3"}
+			field_info := re.Fields()
+			field_info_names := []string{}
+			for _, v := range field_info {
+				field_info_names = append(field_info_names, v.name)
+			}
+			field_errors := deepEqualStringArray(expected_fields_names, field_info_names)
+			if len(field_errors) > 0 {
+				for _, err := range field_errors {
+					t.Error(err)
+				}
+			}
+		})
+
 		t.Run("GroupNames", func(t *testing.T) {
-
 			expected_groups_names := []string{"group1"}
-
 			group_errors := deepEqualStringArray(expected_groups_names, valid_group_names)
+			if len(group_errors) > 0 {
+				for _, err := range group_errors {
+					t.Error(err)
+				}
+			}
+		})
+
+		t.Run("DyRe_Request.Groups()", func(t *testing.T) {
+			expected_groups_names := []string{"group1"}
+			group_info := re.Groups()
+			group_info_names := []string{}
+			for _, v := range group_info {
+				group_info_names = append(group_info_names, v.name)
+			}
+			group_errors := deepEqualStringArray(expected_groups_names, group_info_names)
 			if len(group_errors) > 0 {
 				for _, err := range group_errors {
 					t.Error(err)

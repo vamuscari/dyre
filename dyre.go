@@ -126,6 +126,30 @@ func (re *DyRe_Request) Groups() map[string]DyRe_Group {
 	return maps.Clone(re.groups)
 }
 
+func (field *DyRe_Field) Name() string {
+	return field.name
+}
+
+func (field *DyRe_Field) Required() bool {
+	return field.required
+}
+
+func (field *DyRe_Field) SQLSelect() string {
+	return field.sqlSelect
+}
+
+func (group *DyRe_Group) Name() string {
+	return group.name
+}
+
+func (group *DyRe_Group) Required() bool {
+	return group.required
+}
+
+func (group *DyRe_Group) Fields() map[string]DyRe_Field {
+	return maps.Clone(group.fields)
+}
+
 func contains(a []string, l string) bool {
 	for _, v := range a {
 		if l == v {
